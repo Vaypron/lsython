@@ -68,7 +68,7 @@ def files(path):
             else:
                 items["visible"]["dirs"].append(file)
 
-    return  items
+    return items
 
 
 def get_file_information(filename):
@@ -80,36 +80,38 @@ def output(path, use_subfix):
     print("")
     directory = files(path=path)
 
-    print(bcolors.BOLD+bcolors.HEADER+bcolors.UNDERLINE+"Files and directories you shouldn't be allowed to see:"+bcolors.ENDC)
+    print(
+        bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "Files and directories you shouldn't be allowed to see:" + bcolors.ENDC)
     print("")
     for invisible in directory["invisible"]["dirs"]:
         prefix = "    "
         if is_exe(invisible):
             prefix[0] = "+"
-        print(bcolors.OKGREEN+prefix+invisible)
+        print(bcolors.OKGREEN + prefix + invisible)
 
     for invisible in directory["invisible"]["files"]:
         prefix = "    "
         if is_exe(invisible):
             prefix[0] = "+"
-        print(bcolors.WARNING+prefix+invisible)
+        print(bcolors.WARNING + prefix + invisible)
 
     print("")
-    print(bcolors.BOLD+bcolors.HEADER+bcolors.UNDERLINE+"That are files you should be allowed to see:"+bcolors.ENDC)
+    print(
+        bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "That are files you should be allowed to see:" + bcolors.ENDC)
     print("")
 
     for visible in directory["visible"]["dirs"]:
         prefix = "    "
         if is_exe(visible):
             prefix[0] = "+"
-        print( bcolors.OKGREEN + prefix + visible)
+        print(bcolors.OKGREEN + prefix + visible)
 
     for visible in directory["visible"]["files"]:
-        prefix=generate_prefix(path,visible)
-        subfix=""
+        prefix = generate_prefix(path, visible)
+        subfix = ""
         if use_subfix == True:
-            subfix=generate_subfix(path,visible)
-        print(bcolors.WARNING +prefix + visible + subfix)
+            subfix = generate_subfix(path, visible)
+        print(bcolors.WARNING + prefix + visible + subfix)
 
     print(bcolors.ENDC)
     print("")
@@ -118,10 +120,11 @@ def output(path, use_subfix):
 
 
 def generate_legend():
-    print("+Executables  " + bcolors.WARNING + u"\u2588" +bcolors.ENDC+"File  " + bcolors.OKGREEN + u"\u2588" +bcolors.ENDC+"Directory")
+    print(
+        "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory")
 
 
-def generate_prefix(path,file):
+def generate_prefix(path, file):
     prefix = "    "
     if is_exe(os.path.join(path, file)):
         tmp = list(prefix)
@@ -129,36 +132,32 @@ def generate_prefix(path,file):
         prefix = "".join(tmp)
     return prefix
 
+
 def generate_subfix(path, file):
-    subfix= ""
-    Extension=file[-3:]
-    tmp = list(subfix)
-    for i in range(15-len(file)):
+    Extension = file.rsplit('.', 1)[-1]
+    Extension='.'+Extension
+    tmp = []
+    for i in range(50 - len(file)):
         tmp.append(" ")
     subfix = "".join(tmp)
-    subfix+="----    "
-    if Extension == ".py":
-        subfix+="Python File"
-    elif Extension == ".sh":
-        subfix+="Shell Script"
-    elif Extension == "pdf":
-        subfix+="PDF Document"
+
+
+    if Extension in Extensions:
+        subfix += "----    "
+        subfix += Extensions[Extension]
+
     return subfix
 
 
-
-
-
-
 if __name__ == "__main__":
-    use_subfix=False
-    path="."
+    use_subfix = False
+    path = "."
     if len(sys.argv) == 1:
-        path="."
-    for index,arg in enumerate(sys.argv):
+        path = "."
+    for index, arg in enumerate(sys.argv):
         if arg[0] == "-":
             if arg[1] == "d":
-                path=sys.argv[index+1]
+                path = sys.argv[index + 1]
             if arg[1] == "m":
                 use_subfix = True
 
