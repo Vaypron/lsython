@@ -1,6 +1,6 @@
 import os
 import sys
-
+from extension import Lsython_database
 
 class bcolors:
     HEADER = '\033[91m'
@@ -12,153 +12,143 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class file_utility:
+    def is_exe(self, fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-Extensions = {'.pdf': 'PDF document', '.py': 'Python file', '.exe': 'Windows executable', '.cpp': 'C++ source file',
-              '.h': 'C++ header file', 'hpp': 'C++ file', '.js': 'JavaScript file', '.html': 'HTML file',
-              '.css': 'CSS design file', '.sh': 'Shell script', '.txt': 'Text file', '.aif': 'AIF audio file',
-              '.cda': 'CD audio track file', '.midi': 'MIDI audio file', '.mp3': 'MP3 audio file',
-              '.mpa': 'MPEG-2 audio file', '.ogg': 'Ogg Vorbis audio file', '.wav': 'WAV audio file',
-              '.wpl': 'Windows Media Player playlist', '.7z': '7-zip compressed file', '.arj': 'ARJ compressed file',
-              '.deb': 'Debian software package file', '.pkg': 'Package file', '.rar': 'RAR archive',
-              '.rpm': 'Red Hat Package Manager', '.tar': 'TAR compressed file', '.gz': 'Gunzip compressed file',
-              '.tar.gz': 'Tarball compressed file', '.z': 'Z compressed file', '.zip': 'ZIP compressed file',
-              '.bin': 'Binary file', '.dmg': 'macOS X disk image', '.iso': 'ISO disc image',
-              '.toast': 'Toast disc image', '.vcd': 'Virtual CD', '.csv': 'Comma separated value file',
-              '.dat': 'Data file','.db': 'Database file','.log': 'Log file', '.mdb': ' Microsoft Access database file',
-              '.sav': 'Save file','.sql': 'SQL database file', '.xml': 'XML file', '.apk': 'Android package file',
-              '.bat': 'Batch file', '.cgi' : 'Common gateway interface executable', '.com':'MS-DOS command file',
-              '.jar':'Java archive file', '.wsf': 'Windows script File', '.fnt': 'Windows font file',
-              '.fon': 'Generic font file', 'otf': 'Open type font file', '.ttf': 'TrueType font file',
-              '.ai': 'Adobe Illustrator file', '.bmp': 'Bitmap image', '.gif': 'GIF File', '.ico': 'Icon file',
-              'jpeg': 'JPEG image', '.jpg':'JPEG image', '.png': 'PNG image', '.ps': 'PostScript file',
-              '.psd': 'PSD image','.svg': 'Scalable vector graphics file', '.tif': 'TIFF image', '.tiff': 'TIFF image',
-              '.php': 'PHP file', '.rss': 'RSS file', '.key':'Keynote presentation',
-              '.odp': 'OpenOffice Impress presentation file', '.pps':'PowerPoint slide show',
-              '.ppt': 'PowerPoint presentation', '.pptx': 'PowerPoint open XML presentation',
-              '.class': 'Java class file', '.vb': 'Visual Basic file', '.swift': 'Swift source code file',
-              '.java':'Java source code file', '.bak' : 'Backup file', '.cab': 'Windows cabinet file',
-              '.cfg': 'Configuration file', '.config': 'Configuration file', '.cpl': 'Windows Control panel file',
-              '.cur': 'Windows cursor file', '.dll' : 'Dynamic link library', '.dmp': 'Dump file',
-              '.drv': 'Device driver file', '.icns': 'macOS X icon resource file', '.ico': 'Icon file',
-              '.ini': 'Initialization file', '.lnk': 'Windows shortcut file', '.msi': 'Windows installer package',
-              '.sys': 'Windows system file', '.tmp': 'Temporary file', '.avi': 'AVI video file',
-              '.flv': 'Adobe flash file', '.h265': 'H.264 video file', '.m4v': 'Apple MP4 video file',
-              '.mkv': 'Matroska Multimedia Container', '.mp4': 'MPEG4 video file', '.mpg': 'MPEG video file',
-              '.mpeg': 'MPEG video file', '.rm': 'RealMedia file', '.swf': 'Shockwave flash file',
-              '.vob': 'DVD Video Object', '.wmv': 'Windows Medio Video file'}
+    def files(self, path):
+        items = {"visible": {"dirs": [], "files": []}, "invisible": {"dirs": [], "files": []}}
 
+        for file in os.listdir(path):
+            if os.path.isfile(os.path.join(path, file)):
+                if file[0] == '.':
+                    items["invisible"]["files"].append(file)
+                else:
+                    items["visible"]["files"].append(file)
 
-def is_exe(fpath):
-    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+            elif os.path.isdir(os.path.join(path, file)):
+                if file[0] == ".":
+                    items["invisible"]["dirs"].append(file)
+                else:
+                    items["visible"]["dirs"].append(file)
+
+        return items
+
+    def get_file_information(self, filename):
+        file = os.stat(filename)
+        print(file)
+
+class Lsython:
+    def __init__(self, descriptions, path, suggested_software):
+        self._database = Lsython_database('extensions.json')
+        self._file_utility = file_utility()
+        self._descriptions = descriptions
+        self._suggested_software = suggested_software
+        self._path = path
 
 
-def files(path):
-    items = {"visible": {"dirs": [], "files": []}, "invisible": {"dirs": [], "files": []}}
+    def generate_legend(self) -> str:
+        return "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory"
 
-    for file in os.listdir(path):
-        if os.path.isfile(os.path.join(path, file)):
-            if file[0] == '.':
-                items["invisible"]["files"].append(file)
-            else:
-                items["visible"]["files"].append(file)
-
-        elif os.path.isdir(os.path.join(path, file)):
-            if file[0] == ".":
-                items["invisible"]["dirs"].append(file)
-            else:
-                items["visible"]["dirs"].append(file)
-
-    return items
-
-
-def get_file_information(filename):
-    file = os.stat(filename)
-    print(file)
-
-
-def output(path, use_subfix):
-    print("")
-    directory = files(path=path)
-
-    print(
-        bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "Files and directories you shouldn't be allowed to see:" + bcolors.ENDC)
-    print("")
-    for invisible in directory["invisible"]["dirs"]:
+    def generate_prefix(self, path, file) -> str:
         prefix = "    "
-        if is_exe(invisible):
-            prefix[0] = "+"
-        print(bcolors.OKGREEN + prefix + invisible)
+        if self._file_utility.is_exe(os.path.join(path, file)):
+            tmp = list(prefix)
+            tmp[0] = "+"
+            prefix = "".join(tmp)
+        return prefix
 
-    for invisible in directory["invisible"]["files"]:
-        prefix = "    "
-        if is_exe(invisible):
-            prefix[0] = "+"
-        print(bcolors.WARNING + prefix + invisible)
+    def generate_subfix(self, path, file) -> str:
+        extension = file.rsplit('.', 1)[-1]
+        extension = '.' + extension
+        if self._descriptions or self._suggested_software:
+            entry = self._database._db_extensions.search(self._database._query.extension == extension)
+            if len(entry) != 1:
+                return ""
+        else:
+            return ""
 
-    print("")
-    print(
-        bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "That are files you should be allowed to see:" + bcolors.ENDC)
-    print("")
+        tmp = []
+        for i in range(50 - len(file)):
+            tmp.append(" ")
+        subfix = "".join(tmp)
 
-    for visible in directory["visible"]["dirs"]:
-        prefix = "    "
-        if is_exe(visible):
-            prefix[0] = "+"
-        print(bcolors.OKGREEN + prefix + visible)
+        if self._descriptions:
+            subfix += "----    "
+            subfix += entry[0]['description']
+            for i in range(40-len(entry[0]['description'])):
+                subfix+=" "
+        if self._suggested_software:
+            subfix += "----    "
+            subfix += entry[0]['suggested software']
+        return subfix
 
-    for visible in directory["visible"]["files"]:
-        prefix = generate_prefix(path, visible)
-        subfix = ""
-        if use_subfix == True:
-            subfix = generate_subfix(path, visible)
-        print(bcolors.WARNING + prefix + visible + subfix)
+    def generate_header(self):
+        header = ""
+        if self._descriptions:
+            for i in range(59):
+                header += " "
+            header += "File Type:"
+        if self._suggested_software:
+            for i in range(38):
+                header += " "
+            header += "Suggested Software:"
+        return header
 
-    print(bcolors.ENDC)
-    print("")
-    print("")
-    generate_legend()
+    def output(self):
+        print("")
+        directory = self._file_utility.files(path=self._path)
 
+        print(
+            bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "Files and directories you shouldn't be allowed to see:" + bcolors.ENDC)
+        print("")
 
-def generate_legend():
-    print(
-        "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory")
+        print(self.generate_header())
+        for invisible in directory["invisible"]["dirs"]:
+            prefix =self.generate_prefix(path, invisible)
+            print(bcolors.OKGREEN + prefix + invisible)
 
+        for invisible in directory["invisible"]["files"]:
+            prefix = self.generate_prefix(path, invisible)
+            subfix = self.generate_subfix()
+            print(bcolors.WARNING + prefix + invisible+subfix)
 
-def generate_prefix(path, file):
-    prefix = "    "
-    if is_exe(os.path.join(path, file)):
-        tmp = list(prefix)
-        tmp[0] = "+"
-        prefix = "".join(tmp)
-    return prefix
+        print("")
+        print(
+            bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "These are files you should be allowed to see:" + bcolors.ENDC)
+        print("")
+        print(self.generate_header())
 
+        for visible in directory["visible"]["dirs"]:
+            prefix = self.generate_prefix(path, visible)
+            print(bcolors.OKGREEN + prefix + visible)
 
-def generate_subfix(path, file):
-    Extension = file.rsplit('.', 1)[-1]
-    Extension='.'+Extension
-    tmp = []
-    for i in range(50 - len(file)):
-        tmp.append(" ")
-    subfix = "".join(tmp)
+        for visible in directory["visible"]["files"]:
+            prefix = self.generate_prefix(path, visible)
+            subfix = self.generate_subfix(path, visible)
+            print(bcolors.WARNING + prefix + visible + subfix)
 
-
-    if Extension in Extensions:
-        subfix += "----    "
-        subfix += Extensions[Extension]
-
-    return subfix
+        print(bcolors.ENDC)
+        print("")
+        print("")
+        self.generate_legend()
 
 
 if __name__ == "__main__":
-    use_subfix = False
-    path = "."
-    if len(sys.argv) == 1:
-        path = "."
-    for index, arg in enumerate(sys.argv):
-        if arg[0] == "-":
-            if arg[1] == "d":
-                path = sys.argv[index + 1]
-            if arg[1] == "m":
-                use_subfix = True
 
-    output(path, use_subfix)
+    descriptions = False
+    suggested_software = False
+    path = '.'
+    if len(sys.argv) == 1:
+        path = '.'
+    for index, arg in enumerate(sys.argv):
+        if arg[0] == '-':
+            if arg[1] == 'd':
+                path = sys.argv[index + 1]
+            elif arg[1] == 'm':
+                descriptions = True
+            elif arg[1] == 's':
+                suggested_software = True
+
+    active_class = Lsython(path=path, descriptions=descriptions, suggested_software=suggested_software )
+    active_class.output()
