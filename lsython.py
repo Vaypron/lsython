@@ -1,6 +1,8 @@
 import os
 import sys
 from extension import Lsython_database
+from datetime import datetime
+
 
 class bcolors:
     HEADER = '\033[91m'
@@ -11,6 +13,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
 
 class file_utility:
     def is_exe(self, fpath):
@@ -34,18 +37,18 @@ class file_utility:
 
         return items
 
-    def get_file_information(self, filename):
+    def get_modified_date(self, filename):
         file = os.stat(filename)
-        print(file)
+        dt = datetime.fromtimestamp(file.st_mtime)
+
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+
 
 class Lsython:
-    def __init__(self, descriptions, path, suggested_software):
+    def __init__(self, parameters):
         self._database = Lsython_database('extensions.json')
         self._file_utility = file_utility()
-        self._descriptions = descriptions
-        self._suggested_software = suggested_software
-        self._path = path
-
+        self._parameters = parameters
 
     def generate_legend(self) -> str:
         return "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory"
@@ -61,7 +64,7 @@ class Lsython:
     def generate_subfix(self, path, file) -> str:
         extension = file.rsplit('.', 1)[-1]
         extension = '.' + extension
-        if self._descriptions or self._suggested_software:
+        if self._parameters['description'] or self._parameters['suggested software'] or self._parameters['modified date']:
             entry = self._database._db_extensions.search(self._database._query.extension == extension)
             if len(entry) != 1:
                 return ""
@@ -73,31 +76,42 @@ class Lsython:
             tmp.append(" ")
         subfix = "".join(tmp)
 
-        if self._descriptions:
-            subfix += "----    "
-            subfix += entry[0]['description']
-            for i in range(40-len(entry[0]['description'])):
-                subfix+=" "
-        if self._suggested_software:
-            subfix += "----    "
-            subfix += entry[0]['suggested software']
+        for iterator in self._parameters['order']:
+            subfix += self.generate_column(iterator=iterator,entry=entry,file=file)
+
         return subfix
 
-    def generate_header(self):
+    def generate_column(self,iterator,entry,file):
+        subfix = "----    "
+        whitespaces = 0
+        if iterator == 'modified date':
+            tmp = self._file_utility.get_modified_date(filename=file)
+            whitespaces = 42 - len(tmp)
+
+        else:
+            tmp = entry[0][iterator]
+            whitespaces = 42 - len(entry[0][iterator])
+
+        subfix+=tmp
+        for i in range(whitespaces):
+            subfix += " "
+
+        return subfix
+
+    def generate_header(self) -> str:
+        topics = {'description' : 'File Type:', 'suggested software': 'Recommended Software:', 'modified date' : 'Modified Date:'}
         header = ""
-        if self._descriptions:
-            for i in range(59):
+        for i in range(59):
+            header += " "
+        for iterator in self._parameters['order']:
+            header += topics[iterator]
+            for i in range(50-len(topics[iterator])):
                 header += " "
-            header += "File Type:"
-        if self._suggested_software:
-            for i in range(38):
-                header += " "
-            header += "Suggested Software:"
         return header
 
     def output(self):
         print("")
-        directory = self._file_utility.files(path=self._path)
+        directory = self._file_utility.files(path=self._parameters['path'])
 
         print(
             bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + "Files and directories you shouldn't be allowed to see:" + bcolors.ENDC)
@@ -105,13 +119,13 @@ class Lsython:
 
         print(self.generate_header())
         for invisible in directory["invisible"]["dirs"]:
-            prefix =self.generate_prefix(path, invisible)
+            prefix = self.generate_prefix(self._parameters['path'], invisible)
             print(bcolors.OKGREEN + prefix + invisible)
 
         for invisible in directory["invisible"]["files"]:
-            prefix = self.generate_prefix(path, invisible)
-            subfix = self.generate_subfix()
-            print(bcolors.WARNING + prefix + invisible+subfix)
+            prefix = self.generate_prefix(self._parameters['path'], invisible)
+            subfix = self.generate_subfix(self._parameters['path'], invisible)
+            print(bcolors.WARNING + prefix + invisible + subfix)
 
         print("")
         print(
@@ -120,35 +134,39 @@ class Lsython:
         print(self.generate_header())
 
         for visible in directory["visible"]["dirs"]:
-            prefix = self.generate_prefix(path, visible)
+            prefix = self.generate_prefix(self._parameters['path'], visible)
             print(bcolors.OKGREEN + prefix + visible)
 
         for visible in directory["visible"]["files"]:
-            prefix = self.generate_prefix(path, visible)
-            subfix = self.generate_subfix(path, visible)
+            prefix = self.generate_prefix(self._parameters['path'], visible)
+            subfix = self.generate_subfix(self._parameters['path'], visible)
             print(bcolors.WARNING + prefix + visible + subfix)
 
         print(bcolors.ENDC)
         print("")
         print("")
-        self.generate_legend()
+        print(self.generate_legend())
 
 
 if __name__ == "__main__":
-
+    parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False, 'order': []}
     descriptions = False
     suggested_software = False
-    path = '.'
-    if len(sys.argv) == 1:
-        path = '.'
-    for index, arg in enumerate(sys.argv):
-        if arg[0] == '-':
-            if arg[1] == 'd':
-                path = sys.argv[index + 1]
-            elif arg[1] == 'm':
-                descriptions = True
-            elif arg[1] == 's':
-                suggested_software = True
 
-    active_class = Lsython(path=path, descriptions=descriptions, suggested_software=suggested_software )
+    if len(sys.argv) > 1:
+        for index, arg in enumerate(sys.argv):
+            if arg[0] == '-':
+                if arg[1] == 'd':
+                    parameters['path'] = sys.argv[index + 1]
+                elif arg[1] == 'f':
+                    parameters['description'] = True
+                    parameters['order'].append('description')
+                elif arg[1] == 's':
+                    parameters['suggested software'] = True
+                    parameters['order'].append('suggested software')
+                elif arg[1] == 'm':
+                    parameters['modified date'] = True
+                    parameters['order'].append('modified date')
+
+    active_class = Lsython(parameters=parameters)
     active_class.output()
