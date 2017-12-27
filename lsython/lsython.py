@@ -1,7 +1,7 @@
 import os
 
-from extension import Lsython_database
-from file_utility import file_utility
+from .extension import Lsython_database
+from .file_utility import file_utility
 
 
 class bcolors:

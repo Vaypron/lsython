@@ -3,7 +3,7 @@ from lsython import generate_help, Lsython
 
 
 if __name__ == '__main__':
-    parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False,'sort' : 'a',  'order': []}
+    parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False,'sort' : 'a','no cut' : False,  'order': []}
     try:
         if len(sys.argv) > 1:
             for index, arg in enumerate(sys.argv):
@@ -41,6 +41,9 @@ if __name__ == '__main__':
 
                             else:
                                 raise Exception("You need to tell me a parameter by which I should sort the list. Jeez. Read the help page...")
+
+                        elif char == 'c':
+                            parameters['no cut'] = True
                         else:
                             if char != '-':
                                 raise Exception("Unknown flag... Can't you just read the help page???")
