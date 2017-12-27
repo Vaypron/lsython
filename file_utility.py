@@ -24,8 +24,8 @@ class file_utility:
 
         return items
 
-    def get_modified_date(self, filename):
-        file = os.stat(filename)
+    def get_modified_date(self,path, filename):
+        file = os.stat(os.path.join(path, filename))
         dt = datetime.fromtimestamp(file.st_mtime)
 
         return dt.strftime('%Y-%m-%d %H:%M:%S')
