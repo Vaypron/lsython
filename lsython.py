@@ -72,8 +72,7 @@ class Lsython:
 
         for iterator in self._parameters['order']:
             header += topics[iterator]
-            for i in range(round(((48-len(topics[iterator]))/8)+0.49)):
-                header += '\t'
+            header += self.calc_tabs(string=topics[iterator], tab_count=6)
         return header
 
     def file_list(self, visibility, directory):
@@ -92,10 +91,18 @@ class Lsython:
     def generate_file_list(self,directory,color):
         _list = ''
         for _file in directory:
+
+            if len(_file) > 24 and self._parameters['no cut'] == False:
+                extension = _file.rsplit('.', 1)[-1]
+                ending = "[...]"+'.'+extension
+                formatted_file=_file[:24-len(ending)]
+                formatted_file+=ending
+            else:
+                formatted_file=_file
             prefix = self.generate_prefix(self._parameters['path'], _file)
             subfix = self.generate_subfix(self._parameters['path'], _file)
             tabs = self.calc_tabs(string=_file, tab_count=3)
-            _list += color + prefix + '\t' + _file + tabs + subfix + '\n'
+            _list += color + prefix + '\t' + formatted_file + tabs + subfix + '\n'
         return _list
 
     def calc_tabs(self, string, tab_count):
@@ -116,7 +123,7 @@ class Lsython:
                 extension = file.rsplit('.', 1)[-1]
                 vis_order.append((index, extension))
             elif sort == 'm':
-                vis_order.append((index, self._file_utility.get_modified_date(filename=file)))
+                vis_order.append((index, self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)))
 
         vis_order.sort(key=lambda tup: tup[1])
         vis_ordered =[]
@@ -147,6 +154,7 @@ def generate_help() -> str:
     help_string += '\t\t-d [path]\tList directory information \n'
     help_string += '\t\t-g [file]\tList file information \n'
     help_string += '\t\t-s [a|m|e]\tSort (a)lphabetically[default] | by (m)odified date | by (e)xtension \n'
+    help_string += '\t\t-c\t\tCut off long filenames to keep format. No cut if set \n'
     help_string += '\t\t-h\t\tShow help page \n'
     help_string += '\t\t-f\t\tShow additional information : file type \n'
     help_string += '\t\t-r\t\tShow additional information : recommended software \n'
