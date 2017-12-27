@@ -3,7 +3,7 @@ from lsython import generate_help, Lsython
 
 
 if __name__ == '__main__':
-    parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False, 'order': []}
+    parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False,'sort' : False,  'order': []}
 
     if len(sys.argv) > 1:
         for index, arg in enumerate(sys.argv):
@@ -23,6 +23,8 @@ if __name__ == '__main__':
                     elif char == 'm':
                         parameters['modified date'] = True
                         parameters['order'].append('modified date')
+                    elif char == 's':
+                        parameters['sort'] = True
 
     active_class = Lsython(parameters=parameters)
     print(active_class.output())

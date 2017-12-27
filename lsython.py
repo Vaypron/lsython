@@ -70,7 +70,7 @@ class Lsython:
         topics = {'description': 'File Type:', 'suggested software': 'Recommended Software:',
                   'modified date': 'Modified Date:'}
         header = ""
-        for i in range(59):
+        for i in range(54):
             header += " "
         for iterator in self._parameters['order']:
             header += topics[iterator]
@@ -79,16 +79,32 @@ class Lsython:
         return header
 
     def file_list(self, visibility, directory):
-        _list = ""
-        for invisible in directory[visibility]['dirs']:
-            prefix = self.generate_prefix(self._parameters['path'], invisible)
-            _list += bcolors.OKGREEN + prefix + invisible + '\n'
+        _list=""
+        _file_list =  directory[visibility]['files']
+        if self._parameters['sort']:
+            _file_list = self.sort_file_list(visibility=visibility,directory=directory)
+        for _file in directory[visibility]['dirs']:
+            prefix = self.generate_prefix(self._parameters['path'], _file)
+            subfix = self.generate_subfix(self._parameters['path'], _file)
+            _list += bcolors.OKGREEN + prefix + _file + subfix+ '\n'
 
-        for invisible in directory[visibility]['files']:
-            prefix = self.generate_prefix(self._parameters['path'], invisible)
-            subfix = self.generate_subfix(self._parameters['path'], invisible)
-            _list += bcolors.WARNING + prefix + invisible + subfix + '\n'
+        for _file in _file_list:
+            prefix = self.generate_prefix(self._parameters['path'], _file)
+            subfix = self.generate_subfix(self._parameters['path'], _file)
+            _list += bcolors.WARNING + prefix + _file + subfix + '\n'
         return _list
+
+    def sort_file_list(self, visibility,directory):
+        vis_order = []
+        for index, file in enumerate(directory[visibility]['files']):
+            extension = file.rsplit('.', 1)[-1]
+            vis_order.append((index, extension))
+        vis_order.sort(key=lambda tup: tup[1])
+        vis_ordered = []
+        for file in vis_order:
+            vis_ordered.append(directory[visibility]['files'][file[0]])
+
+        return vis_ordered
 
     def output(self) -> str:
         directory = self._file_utility.files(path=self._parameters['path'])
@@ -113,4 +129,5 @@ def generate_help() -> str:
     help_string += '  -f        Show additional information : file type \n'
     help_string += '  -r        Show additional information : recommended software \n'
     help_string += '  -m        Show additional information : modified date \n'
+    help_string += '  -s        sort by extension \n'
     return help_string
