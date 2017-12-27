@@ -43,9 +43,9 @@ class Lsython:
             return ""
 
         tmp = []
-        for i in range(50 - len(file)):
-            tmp.append(" ")
-        subfix = "".join(tmp)
+        tmp.append('\t')
+
+        subfix= "".join(tmp)
 
         for iterator in self._parameters['order']:
             subfix += self.generate_column(iterator=iterator, entry=entry, file=file)
@@ -69,9 +69,8 @@ class Lsython:
     def generate_header(self) -> str:
         topics = {'description': 'File Type:', 'suggested software': 'Recommended Software:',
                   'modified date': 'Modified Date:'}
-        header = ""
-        for i in range(54):
-            header += " "
+        header = "\t\t\t\t\t"
+
         for iterator in self._parameters['order']:
             header += topics[iterator]
             for i in range(50 - len(topics[iterator])):
@@ -79,32 +78,47 @@ class Lsython:
         return header
 
     def file_list(self, visibility, directory):
+        _file_list = []
         _list=""
-        _file_list =  directory[visibility]['files']
-        if self._parameters['sort']:
-            _file_list = self.sort_file_list(visibility=visibility,directory=directory)
+
+        if self._parameters['sort'] in ['m','e']:
+            _file_list = self.sort_file_list(visibility=visibility,directory=directory, sort=self._parameters['sort'])
+        elif self._parameters['sort'] == 'a':
+            _file_list = directory[visibility]['files']
+        print(directory[visibility]['dirs'].sort())
+
+
         for _file in directory[visibility]['dirs']:
             prefix = self.generate_prefix(self._parameters['path'], _file)
             subfix = self.generate_subfix(self._parameters['path'], _file)
-            _list += bcolors.OKGREEN + prefix + _file + subfix+ '\n'
+            _list += bcolors.OKGREEN + prefix+'\t' + _file+'\t' + subfix+ '\n'
 
         for _file in _file_list:
             prefix = self.generate_prefix(self._parameters['path'], _file)
             subfix = self.generate_subfix(self._parameters['path'], _file)
-            _list += bcolors.WARNING + prefix + _file + subfix + '\n'
+            _list += bcolors.WARNING + prefix+'\t' + _file +'\t'+ subfix + '\n'
         return _list
 
-    def sort_file_list(self, visibility,directory):
+    def sort_file_list(self, visibility,directory, sort):
+        if sort == 'a':
+            tmp = list(directory[visibility]['files'])
+            return tmp.sort()
+
         vis_order = []
         for index, file in enumerate(directory[visibility]['files']):
-            extension = file.rsplit('.', 1)[-1]
-            vis_order.append((index, extension))
+            if sort == 'e':
+                extension = file.rsplit('.', 1)[-1]
+                vis_order.append((index, extension))
+            elif sort == 'm':
+                vis_order.append((index, self._file_utility.get_modified_date(filename=file)))
+
         vis_order.sort(key=lambda tup: tup[1])
-        vis_ordered = []
+        vis_ordered =[]
         for file in vis_order:
             vis_ordered.append(directory[visibility]['files'][file[0]])
-
         return vis_ordered
+
+
 
     def output(self) -> str:
         directory = self._file_utility.files(path=self._parameters['path'])
@@ -122,12 +136,14 @@ class Lsython:
 
 
 def generate_help() -> str:
-    help_string = '\nlsython [-d|-g] [path|file] [-h|-f|-s|-m|-i|] \n'
-    help_string += '  -d [path] List directory information \n'
-    help_string += '  -g [file] List file information \n'
-    help_string += '  -h        Show help page \n'
-    help_string += '  -f        Show additional information : file type \n'
-    help_string += '  -r        Show additional information : recommended software \n'
-    help_string += '  -m        Show additional information : modified date \n'
-    help_string += '  -s        sort by extension \n'
+    help_string = 'Usage:\n'
+    help_string +='\tlsython [-d|-g] [path|file] [-h|-f|-s|-m|-i|] \n'
+    help_string += '\t\t-d [path]\tList directory information \n'
+    help_string += '\t\t-g [file]\tList file information \n'
+    help_string += '\t\t-s [a|m|e]\tSort (a)lphabetically[default] | by (m)odified date | by (e)xtension \n'
+    help_string += '\t\t-h\t\tShow help page \n'
+    help_string += '\t\t-f\t\tShow additional information : file type \n'
+    help_string += '\t\t-r\t\tShow additional information : recommended software \n'
+    help_string += '\t\t-m\t\tShow additional information : modified date \n'
+
     return help_string
