@@ -1,1 +1,1 @@
-from .lsython import Lsython, generate_help
+from .lsython import Lsython
