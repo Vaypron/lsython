@@ -9,18 +9,21 @@ class file_utility:
     def files(self, path):
         items = {'visible': {'dirs': [], 'files': []}, 'invisible': {'dirs': [], 'files': []}}
 
-        for file in os.listdir(path):
-            if os.path.isfile(os.path.join(path, file)):
-                if file[0] == '.':
-                    items['invisible']['files'].append(file)
-                else:
-                    items['visible']['files'].append(file)
 
-            elif os.path.isdir(os.path.join(path, file)):
-                if file[0] == '.':
-                    items['invisible']['dirs'].append(file)
-                else:
-                    items['visible']['dirs'].append(file)
+        if os.path.isdir(path):
+
+            for file in os.listdir(path):
+                if os.path.isfile(os.path.join(path, file)):
+                    if file[0] == '.':
+                        items['invisible']['files'].append(file)
+                    else:
+                        items['visible']['files'].append(file)
+
+                elif os.path.isdir(os.path.join(path, file)):
+                    if file[0] == '.':
+                        items['invisible']['dirs'].append(file)
+                    else:
+                        items['visible']['dirs'].append(file)
 
         return items
 

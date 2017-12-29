@@ -21,9 +21,6 @@ class Lsython:
         self._file_utility = file_utility()
         self._parameters = self._args(argv)
 
-
-
-
     @property
     def parameters(self):
         return self._parameters
@@ -32,17 +29,16 @@ class Lsython:
     def parameters(self, value):
         self._parameters = value
 
-
     def _generate_legend(self) -> str:
         return "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory"
 
     def _generate_prefix(self, path, file) -> str:
         prefix = ''
         if self._file_utility.is_exe(os.path.join(path, file)):
-            prefix+='+'
+            prefix += '+'
         return prefix
 
-    def _generate_subfix(self, path, file) -> str:
+    def _generate_subfix(self, file) -> str:
         extension = file.rsplit('.', 1)[-1]
         extension = '.' + extension
         if self._parameters['description'] or self._parameters['suggested software'] or self._parameters[
@@ -53,10 +49,9 @@ class Lsython:
         else:
             return ""
 
-        tmp = []
-        tmp.append('\t')
+        tmp = ['\t']
 
-        subfix= "".join(tmp)
+        subfix = "".join(tmp)
 
         for iterator in self._parameters['order']:
             subfix += self._generate_column(iterator=iterator, entry=entry, file=file)
@@ -65,7 +60,6 @@ class Lsython:
 
     def _generate_column(self, iterator, entry, file):
         subfix = "----\t"
-        whitespaces = 0
         if iterator == 'modified date':
             tmp = self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)
             whitespaces = 40 - len(tmp)
@@ -73,7 +67,7 @@ class Lsython:
             tmp = entry[0][iterator]
             whitespaces = 40 - len(entry[0][iterator])
         subfix += tmp
-        for i in range(round((whitespaces/8)+0.49)):
+        for i in range(round((whitespaces / 8) + 0.49)):
             subfix += '\t'
 
         return subfix
@@ -90,42 +84,42 @@ class Lsython:
 
     def _file_list(self, visibility, directory):
         _file_list = []
-        _list=""
+        _list = ""
 
-        if self._parameters['sort'] in ['m','e']:
-            _file_list = self._sort_file_list(visibility=visibility,directory=directory, sort=self._parameters['sort'])
+        if self._parameters['sort'] in ['m', 'e']:
+            _file_list = self._sort_file_list(visibility=visibility, directory=directory, sort=self._parameters['sort'])
         elif self._parameters['sort'] == 'a':
             _file_list = directory[visibility]['files']
 
-        _list += self._generate_file_list(directory[visibility]['dirs'],bcolors.OKGREEN)
+        _list += self._generate_file_list(directory[visibility]['dirs'], bcolors.OKGREEN)
         _list += self._generate_file_list(_file_list, bcolors.WARNING)
         return _list
 
-    def _generate_file_list(self,directory,color):
+    def _generate_file_list(self, directory, color):
         _list = ''
         for _file in directory:
 
-            if len(_file) > 24 and self._parameters['no cut'] == False:
+            if len(_file) > 24 and not self._parameters['no cut']:
                 extension = _file.rsplit('.', 1)[-1]
-                ending = "[...]"+'.'+extension
-                formatted_file=_file[:24-len(ending)]
-                formatted_file+=ending
+                ending = "[...]" + '.' + extension
+                formatted_file = _file[:24 - len(ending)]
+                formatted_file += ending
             else:
-                formatted_file=_file
+                formatted_file = _file
             prefix = self._generate_prefix(self._parameters['path'], _file)
-            subfix = self._generate_subfix(self._parameters['path'], _file)
+            subfix = self._generate_subfix(_file)
             tabs = self._calc_tabs(string=_file, tab_count=3)
             _list += color + prefix + '\t' + formatted_file + tabs + subfix + '\n'
         return _list
 
     def _calc_tabs(self, string, tab_count):
-        tabs_count = round(((tab_count*8 - len(string)) / 8) + 0.49)
+        tabs_count = round(((tab_count * 8 - len(string)) / 8) + 0.49)
         tabs = ''
         for i in range(tabs_count):
             tabs += '\t'
         return tabs
 
-    def _sort_file_list(self, visibility,directory, sort):
+    def _sort_file_list(self, visibility, directory, sort):
         if sort == 'a':
             tmp = list(directory[visibility]['files'])
             return tmp.sort()
@@ -136,17 +130,22 @@ class Lsython:
                 extension = file.rsplit('.', 1)[-1]
                 vis_order.append((index, extension))
             elif sort == 'm':
-                vis_order.append((index, self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)))
+                vis_order.append(
+                    (index, self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)))
 
         vis_order.sort(key=lambda tup: tup[1])
-        vis_ordered =[]
+        vis_ordered = []
         for file in vis_order:
             vis_ordered.append(directory[visibility]['files'][file[0]])
         return vis_ordered
 
+    def _specific_file(self, filename):
+
+
+
+    @property
     def output(self):
         return self._generate_output()
-
 
     def _generate_output(self) -> str:
         directory = self._file_utility.files(path=self._parameters['path'])
@@ -180,13 +179,14 @@ class Lsython:
 
         return help_string
 
-    def _args(self,argv):
-        parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False,'sort' : 'a','no cut' : False,  'order': []}
+    def _args(self, argv):
+        parameters = {'path': '.', 'description': False, 'suggested software': False, 'modified date': False,
+                      'sort': 'a', 'no cut': False, 'order': []}
         try:
             if len(argv) > 1:
                 for index, arg in enumerate(argv):
                     if arg == '-h':
-                        return True,self._generate_help()
+                        return True, self._generate_help()
                     if arg[0] == '-' and 2 <= len(arg):
                         for char in arg:
                             if char == 'd':
@@ -197,21 +197,24 @@ class Lsython:
                                     parameters['order'].append('description')
                                 else:
                                     raise Exception(
-                                        'You can only use a flag once... What purpose would it have to use a flag multiple times?')
+                                        'You can only use a flag once... What purpose would it have to use a flag '
+                                        'multiple times?')
                             elif char == 'r':
                                 if 'suggested software' not in parameters['order']:
                                     parameters['suggested software'] = True
                                     parameters['order'].append('suggested software')
                                 else:
                                     raise Exception(
-                                        'You can only use a flag once... What purpose would it have to use a flag multiple times?')
+                                        'You can only use a flag once... What purpose would it have to use a flag '
+                                        'multiple times?')
                             elif char == 'm':
                                 if 'modified date' not in parameters['order']:
                                     parameters['modified date'] = True
                                     parameters['order'].append('modified date')
                                 else:
                                     raise Exception(
-                                        'You can only use a flag once... What purpose would it have to use a flag multiple times?')
+                                        'You can only use a flag once... What purpose would it have to use a flag '
+                                        'multiple times?')
                             elif char == 's':
                                 if len(argv) > index + 1 and len(argv[index + 1]) == 1:
                                     if argv[index + 1] in ['a', 'm', 'e']:
@@ -222,7 +225,8 @@ class Lsython:
 
                                 else:
                                     raise Exception(
-                                        "You need to tell me a parameter by which I should sort the list. Jeez. Read the help page...")
+                                        "You need to tell me a parameter by which I should sort the list. Jeez. Read "
+                                        "the help page...")
 
                             elif char == 'c':
                                 parameters['no cut'] = True
@@ -234,6 +238,6 @@ class Lsython:
                         if argv[index - 1] not in ['-s', '-d'] and index != 0:
                             raise Exception("Parameter needs to be a flag... Just reaad the help page...")
         except Exception as error:
-            print('Error occurred! ' + error.args[0] + '\n'+ self._generate_help())
+            print('Error occurred! ' + error.args[0] + '\n' + self._generate_help())
             exit()
         return parameters

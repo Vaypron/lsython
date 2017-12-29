@@ -1,5 +1,6 @@
 from tinydb import TinyDB, Query
 
+
 class Lsython_database:
     def __init__(self, db_file):
         self._db = TinyDB(db_file)
