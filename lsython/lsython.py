@@ -139,9 +139,6 @@ class Lsython:
             vis_ordered.append(directory[visibility]['files'][file[0]])
         return vis_ordered
 
-    def _specific_file(self, filename):
-
-
 
     @property
     def output(self):
@@ -186,7 +183,7 @@ class Lsython:
             if len(argv) > 1:
                 for index, arg in enumerate(argv):
                     if arg == '-h':
-                        return True, self._generate_help()
+                        raise Exception('help')
                     if arg[0] == '-' and 2 <= len(arg):
                         for char in arg:
                             if char == 'd':
@@ -238,6 +235,8 @@ class Lsython:
                         if argv[index - 1] not in ['-s', '-d'] and index != 0:
                             raise Exception("Parameter needs to be a flag... Just reaad the help page...")
         except Exception as error:
+            if error.args[0] == 'help':
+                print(self._generate_help())
             print('Error occurred! ' + error.args[0] + '\n' + self._generate_help())
             exit()
         return parameters
