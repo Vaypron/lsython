@@ -83,16 +83,12 @@ class Lsython:
         return header
 
     def _file_list(self, visibility, directory):
-        _file_list = []
+        file_list = []
         _list = ""
 
-        if self._parameters['sort'] in ['m', 'e']:
-            _file_list = self._sort_file_list(visibility=visibility, directory=directory, sort=self._parameters['sort'])
-        elif self._parameters['sort'] == 'a':
-            _file_list = directory[visibility]['files']
-
+        file_list = self._sort_file_list(visibility=visibility, directory=directory, sort=self._parameters['sort'])
         _list += self._generate_file_list(directory[visibility]['dirs'], bcolors.OKGREEN)
-        _list += self._generate_file_list(_file_list, bcolors.WARNING)
+        _list += self._generate_file_list(file_list, bcolors.WARNING)
         return _list
 
     def _generate_file_list(self, directory, color):
@@ -121,8 +117,7 @@ class Lsython:
 
     def _sort_file_list(self, visibility, directory, sort):
         if sort == 'a':
-            tmp = list(directory[visibility]['files'])
-            return tmp.sort()
+            return sorted(directory[visibility]['files'])
 
         vis_order = []
         for index, file in enumerate(directory[visibility]['files']):
