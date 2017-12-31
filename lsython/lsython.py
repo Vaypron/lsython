@@ -30,16 +30,17 @@ class Lsython:
         self._parameters = value
 
     def _generate_legend(self) -> str:
-        return "+Executables  " + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File  " + bcolors.OKGREEN + u"\u2588" + bcolors.ENDC + "Directory"
+        return "+Executables\t" + bcolors.WARNING + u"\u2588" + bcolors.ENDC + "File\t\t" + bcolors.OKGREEN + u"\u2588" \
+               + bcolors.ENDC + "Directory\t" + bcolors.FAIL + u"\u2588" + bcolors.ENDC + "Symlink"
 
-    def _generate_prefix(self, path, file) -> str:
+    def _generate_prefix(self,file) -> str:
         prefix = ''
-        if self._file_utility.is_exe(os.path.join(path, file)):
+        if file.executable == True:
             prefix += '+'
         return prefix
 
     def _generate_subfix(self, file) -> str:
-        extension = file.rsplit('.', 1)[-1]
+        extension = file.name.rsplit('.', 1)[-1]
         extension = '.' + extension
         if self._parameters['description'] or self._parameters['suggested software'] or self._parameters[
             'modified date']:
@@ -55,13 +56,12 @@ class Lsython:
 
         for iterator in self._parameters['order']:
             subfix += self._generate_column(iterator=iterator, entry=entry, file=file)
-        print("Hallo")
         return subfix
 
     def _generate_column(self, iterator, entry, file):
         subfix = "----\t"
         if iterator == 'modified date':
-            tmp = self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)
+            tmp = file.modified
             whitespaces = 40 - len(tmp)
         else:
             tmp = entry[0][iterator]
@@ -82,12 +82,15 @@ class Lsython:
             header += self._calc_tabs(string=topics[iterator], tab_count=6)
         return header
 
-    def _file_list(self, visibility, directory):
+    def _file_list(self, directory):
         file_list = []
         _list = ""
 
-        file_list = self._sort_file_list(visibility=visibility, directory=directory, sort=self._parameters['sort'])
-        _list += self._generate_file_list(directory[visibility]['dirs'], bcolors.OKGREEN)
+        file_list = self._sort_file_list(directory=[file for file in directory if file.type == 'file'], sort=self._parameters['sort'])
+        link_list = self._sort_file_list(directory=[file for file in directory if file.type == 'link'], sort=self._parameters['sort'])
+        dir_list = self._sort_file_list(directory=[file for file in directory if file.type == 'dir'], sort=self._parameters['sort'])
+        _list += self._generate_file_list(dir_list, bcolors.OKGREEN)
+        _list += self._generate_file_list(link_list, bcolors.FAIL)
         _list += self._generate_file_list(file_list, bcolors.WARNING)
         return _list
 
@@ -95,16 +98,16 @@ class Lsython:
         _list = ''
         for _file in directory:
 
-            if len(_file) > 24 and not self._parameters['no cut']:
-                extension = _file.rsplit('.', 1)[-1]
+            if len(_file.name) > 24 and not self._parameters['no cut']:
+                extension = _file.name.rsplit('.', 1)[-1]
                 ending = "[...]" + '.' + extension
-                formatted_file = _file[:24 - len(ending)]
+                formatted_file = _file.name[:24 - len(ending)]
                 formatted_file += ending
             else:
-                formatted_file = _file
-            prefix = self._generate_prefix(self._parameters['path'], _file)
+                formatted_file = _file.name
+            prefix = self._generate_prefix(_file)
             subfix = self._generate_subfix(_file)
-            tabs = self._calc_tabs(string=_file, tab_count=3)
+            tabs = self._calc_tabs(string=_file.name, tab_count=3)
             _list += color + prefix + '\t' + formatted_file + tabs + subfix + '\n'
         return _list
 
@@ -115,23 +118,22 @@ class Lsython:
             tabs += '\t'
         return tabs
 
-    def _sort_file_list(self, visibility, directory, sort):
+    def _sort_file_list(self, directory, sort):
         if sort == 'a':
-            return sorted(directory[visibility]['files'])
+            return sorted(directory, key=lambda s: s.name.lower())
 
         vis_order = []
-        for index, file in enumerate(directory[visibility]['files']):
+        for index, file in enumerate(directory):
             if sort == 'e':
-                extension = file.rsplit('.', 1)[-1]
+                extension = file.name.rsplit('.', 1)[-1]
                 vis_order.append((index, extension))
             elif sort == 'm':
-                vis_order.append(
-                    (index, self._file_utility.get_modified_date(path=self._parameters['path'], filename=file)))
+                vis_order.append((index, file.modified))
 
         vis_order.sort(key=lambda tup: tup[1])
         vis_ordered = []
         for file in vis_order:
-            vis_ordered.append(directory[visibility]['files'][file[0]])
+            vis_ordered.append(directory[file[0]])
         return vis_ordered
 
 
@@ -141,15 +143,20 @@ class Lsython:
 
     def _generate_output(self) -> str:
         directory = self._file_utility.files(path=self._parameters['path'])
+
+
         output = ''
-        output += '\n' + bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + 'Files and directories you shouldn\'t be ' \
+        if len([file for file in directory if file.invisible == True]) != 0:
+            output += '\n' + bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + 'Files and directories you shouldn\'t be ' \
                                                                              'allowed to see:' + bcolors.ENDC + '\n '
-        output += self._generate_header() + '\n'
-        output += self._file_list(visibility='invisible', directory=directory)
-        output += '\n' + bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + 'These are files you should be allowed ' \
+            output += self._generate_header() + '\n'
+            output += self._file_list([file for file in directory if file.invisible == True])
+
+        if len([file for file in directory if file.invisible == False]) != 0:
+            output += '\n' + bcolors.BOLD + bcolors.HEADER + bcolors.UNDERLINE + 'These are files you should be allowed ' \
                                                                              'to see:' + bcolors.ENDC + '\n '
-        output += self._generate_header() + '\n'
-        output += self._file_list(visibility='visible', directory=directory) + bcolors.ENDC + '\n\n'
+            output += self._generate_header() + '\n'
+            output += self._file_list([file for file in directory if file.invisible == False]) + bcolors.ENDC + '\n\n'
         output += self._generate_legend()
         return output
 
