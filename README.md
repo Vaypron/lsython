@@ -1,4 +1,4 @@
-#Lsython
+# Lsython
 
 Lsython is a python implementation of the linux `ls` command.
 It aims to later run a database of extensions and specific files, to be able to 
