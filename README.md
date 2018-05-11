@@ -1,7 +1,7 @@
 #Lsython
 
 Lsython is a python implementation of the linux `ls` command.
-It aims to run a database of extensions and specific files, so it's able to 
+It aims to later run a database of extensions and specific files, to be able to 
 tell you more about a file/directory than just the usual stuff.  
 
 Usage
@@ -26,7 +26,7 @@ A collections of files to test each flag can be found in the `test_directory`.
 
 Supported OS
 --------
-* Linux (functionality and desing) [tested]
+* Linux (functionality and design) [tested]
 * Windows (functionality) [tested]
 * MacOS [not tested yet]
 
@@ -58,7 +58,7 @@ None yet
 License
 -------
 
-Copyright &copy; 2017 by [Tim Gebauer][vaypron].
+Copyright &copy; 2018 by [Tim Gebauer][vaypron].
 
 
 This project is licensed under the MIT license, please see the file **LICENSE** for more information.
